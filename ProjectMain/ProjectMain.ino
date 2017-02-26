@@ -1,52 +1,31 @@
-//#include <Wire.h>
 //#include <SoftwareSerial.h>
-//#include <ESP8266WiFi.h>
 #include <Wiegand.h>
-//#define wifiEN 0;
 WIEGAND wg; //catches data from keypad
 //SoftwareSerial Serial(14, 12, false, 256); //save for possible future use 
-const char* keyA = "123WRX";
-const char* keyB = "113WEX";
-const char* keyC = "223WRT";
+/*
+long keyA = 787592; //SN4546427
+long keyB = 2753672; //SN4546469
+long keyC = 3540104; //SN4882903 -> Andrew's key
+long blackList = 2496273;
+*/
+long tagCode =0;
+long asterisk = 27;
+long keyString =0;
 
-const char* ssid     = "Q46JP_EXT";
-const char* password = "92DDA91C4D";
+boolean flagDone = false;
+unsigned int wiegand_counter;
 
-const char* host = "data.sparkfun.com";
-const char* streamId   = "....................";
-const char* privateKey = "....................";
-char* keyString;
 
 void setup() {
 //get serial going
+  delay(10);
   Serial.begin(9600);
   Serial.println("Hello!");
   Serial.println("Arduino started");
-
   delay(10);
-
-  // We start by connecting to a WiFi network
-
-//connect to internet & Azure
-//wifi setup
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-#if defined (wifiEN)
-  WiFi.begin(ssid, password);
-  
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-
-  Serial.println("");
-  Serial.println("WiFi connected");  
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-
-#endif
-  
+  wg.begin();
+  Serial.println("Keypad enabled");
+  delay(10);
 
 //initialize display 
 
@@ -55,51 +34,9 @@ void setup() {
  #define CH1 10 //CH# ardPin#
  */
 }
-int value = 0;
+
 void loop() {
   // put your main code here, to run repeatedly:
-//listen for key from NFC
-
-//if key, then start keypad
-//listen for keypad
-//if keypad check key & pin against azure
-//if match then open, else log & block where applicable
-//open
-  while (Serial.available() > 0) {
-    Serial.write(Serial.read());
-  }
-  while (Serial.available() > 0) {
-    Serial.write(Serial.read());
-  }
-  delay(5000);
-  ++value;
-#if defined (wifiEN)
-  Serial.print("connecting to ");
-  Serial.println(host);
-  
-  // Use WiFiClient class to create TCP connections
-
-  WiFiClient client;
-  const int httpPort = 80;
-  if (!client.connect(host, httpPort)) {
-    Serial.println("connection failed");
-    return;
-  }
-  
-  unsigned long timeout = millis();
-  while (client.available() == 0) {
-    if (millis() - timeout > 5000) {
-      Serial.println(">>> Client Timeout !");
-      client.stop();
-      return;
-        Serial.println();
-  Serial.println("closing connection");
-  
-    }
-  }
-  #endif
-  //check for NFC shield, keypad
-  wg.begin();
 
   if(wg.available())
   {
@@ -107,28 +44,27 @@ void loop() {
     Serial.print(wg.getCode(),HEX);
     Serial.print(", DECIMAL = ");
     //strcpy(keyString, wg.getCode());
-    //Serial.print(keyString);
-    Serial.print(wg.getCode());
+    //
+    keyString = wg.getCode();
+    Serial.print(keyString);
     Serial.print(", Type W");
     Serial.println(wg.getWiegandType());    
-    
-  if(keyString == (keyA || keyB || keyC)) 
-  {
-    
-    while(keyString != 13){
-    //push buttons to string   
-    strcpy(keyString, wg.getCode());
-    }
-  } else if (keyString = "2496273"){
-  Serial.println("Blacklisted card");
-  } else {
-  keyString = "";
-  }
-  Serial.println(keyString);
-  }
+  } 
   
-
-
+  if(keyString > 27){
+    tagCode = whoKey();
+    keyString =0;
+  }
+ 
+  
+  
+if(keyString == asterisk){
+    Serial.println("Enter code");
+    keyString = 0;
+    //keyString = wg.getCode();
+    //Serial.println(keyString);
+  
+}
 
   /*
 if(ok){
@@ -137,4 +73,29 @@ if(ok){
   digitalWrite(CH1, LOW);   //stops opening door circuit
 }
 */
+}
+
+long whoKey(){
+  switch(keyString) {
+    Serial.println(keyString);
+    case 787592:
+    Serial.println("Doug's key SN4546427");
+    return keyString;
+    break;
+    case 2753672:
+    Serial.println("Ben's key SN4546469");
+    return keyString;
+    break;
+    case 3540104:
+    Serial.println("Andrew's key SN4882903");
+    return keyString;
+    break;
+    case 2496273:
+    Serial.println("Blacklisted card");
+    return 0;
+    break;
+   }
+}
+void getCode(){
+  
 }
