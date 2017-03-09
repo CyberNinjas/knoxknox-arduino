@@ -11,9 +11,10 @@ long blackList = 2496273;
 long tagCode =0;
 long asterisk = 27;
 long keyString =0;
-
-boolean flagDone = false;
-unsigned int wiegand_counter;
+#define CH1 13 //Ch1=D13, output to door lock relay
+#define CH2 10 //Ch2=D10, output to keypad LED
+int pinStr[6] = {1,2,3,6,5,4};
+int index;
 
 
 void setup() {
@@ -26,30 +27,28 @@ void setup() {
   wg.begin();
   Serial.println("Keypad enabled");
   delay(10);
-
-//initialize display 
-
-//setup relay
-/*
- #define CH1 10 //CH# ardPin#
- */
+index = 0;
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-
+/*
   if(wg.available())
   {
     Serial.print("Wiegand HEX = ");
     Serial.print(wg.getCode(),HEX);
     Serial.print(", DECIMAL = ");
-    //strcpy(keyString, wg.getCode());
-    //
     keyString = wg.getCode();
     Serial.print(keyString);
     Serial.print(", Type W");
     Serial.println(wg.getWiegandType());    
   } 
+  */
+  delay(500);
+if(wg.available())
+  {
+keyString = wgData();
+  }
   
   if(keyString > 27){
     tagCode = whoKey();
@@ -60,19 +59,17 @@ void loop() {
   
 if(keyString == asterisk){
     Serial.println("Enter code");
+    //index=0;
+    getKey();
     keyString = 0;
-    //keyString = wg.getCode();
-    //Serial.println(keyString);
   
 }
 
-  /*
-if(ok){
-  digitalWrite(CH1, HIGH); //sets arduino pin #10 to HIGH
-  delay(1000);
-  digitalWrite(CH1, LOW);   //stops opening door circuit
-}
-*/
+  if(keyString == 13){
+  showCode();
+  }
+
+
 }
 
 long whoKey(){
@@ -80,6 +77,7 @@ long whoKey(){
     Serial.println(keyString);
     case 787592:
     Serial.println("Doug's key SN4546427");
+    open();
     return keyString;
     break;
     case 2753672:
@@ -96,6 +94,63 @@ long whoKey(){
     break;
    }
 }
-void getCode(){
-  
+void open(){
+  digitalWrite(CH1, HIGH); //sets arduino pin #13 to HIGH
+  Serial.println("open");
+  delay(1000);
+  digitalWrite(CH1, LOW);   //stops opening door circuit
+
 }
+void getKey(){
+  //int index = index;
+  long local = 0;
+  
+  //local = wg.getCode();
+  for (int i = 0; i < 6; i++){
+    //delay(500);
+    local = wgData();
+    pinStr[i] = local;
+    //index++;
+    Serial.print(index);
+    Serial.println(local);
+    keyString = 0;
+    //return index;
+}}
+
+void showCode(){
+for (int i = 0; i < 6; i++){
+   Serial.print(pinStr[i]," ");
+   delay(50);
+   keyString=0;
+   }
+Serial.println();
+}
+long wgData(){
+long keyData =0;
+    Serial.print("Wiegand HEX = ");
+    Serial.print(wg.getCode(),HEX);
+    Serial.print(", DECIMAL = ");
+    keyData = wg.getCode();
+    Serial.print(keyString);
+    Serial.print(", Type W");
+    Serial.println(wg.getWiegandType());    
+
+  return keyData;
+}
+void blinkThree(){
+  Serial.println("User not recognized");
+  digitalWrite(CH2, HIGH);
+  delay(300);
+    digitalWrite(CH2, LOW);
+  delay(200);
+    digitalWrite(CH2, HIGH);
+  delay(300);
+    digitalWrite(CH2, LOW);
+  delay(200);
+    digitalWrite(CH2, HIGH);
+  delay(300);
+    digitalWrite(CH2, LOW);
+  delay(200);
+
+}
+
