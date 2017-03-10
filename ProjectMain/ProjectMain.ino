@@ -11,11 +11,13 @@ long blackList = 2496273;
 
 #define RELAY_CH 13 //pin D13, output to door lock relay
 #define LED_CH 10 //pin D10, output to keypad LED
-
-//#define KEYPAD_D0 2 // pin D2, input from keypad D0 (work in progress)
-//#define KEYPAD_D1 3 // pin D3, input from keypad D1 (WIP)
-
-//Global variables, use long when pulling from keypad to get full yubi serial
+/*
+//#define KEYPAD_D0 2 
+// pin D2, input from keypad D0 (work in progress)
+//#define KEYPAD_D1 3 
+// pin D3, input from keypad D1 (WIP)
+*/
+/* Global variables, use long when pulling from keypad to get full yubi serial */
 long tagCode =0; //Yubi serial number
 long asterisk = 27; //* key
 long pound = 13; //# key
@@ -25,7 +27,7 @@ int index;
 
 
 void setup() {
-//get serial going, let serial know what's up
+/*get serial going, let serial know what's up */
   delay(100); //let system voltages settle
   Serial.begin(9600); //serial baud
   Serial.println("Hello!");
@@ -36,8 +38,8 @@ index = 0;
 }
 
 void loop() {
-  // Main code runs reatedly
-/* //this is the standard method used to poll the keypad from the Wiegand example but the decimal value is stored in keyString
+/*  code runs reatedly
+this is the standard method used to poll the keypad from the Wiegand example but the decimal value is stored in keyString
   if(wg.available())
   {
     Serial.print("Wiegand HEX = ");
@@ -49,8 +51,8 @@ void loop() {
     Serial.println(wg.getWiegandType());    
   } 
   */
-  //setup interrupts for keypad, a better way of taking data from keypad (work in progress)
-  /*
+  /*setup interrupts for keypad, a better way of taking data from keypad (work in progress)
+  
   pinMode(PIN_D0, INPUT);
   pinMode(PIN_D1, INPUT);
   setInterrupt(digitalPinToInterrupt(PIN_D0), pinChange, CHANGE);
@@ -61,14 +63,14 @@ if(wg.available())
   {
 keyString = wgData();
   }
-  
+  /*keyStrings over 27 are codes from the yubikeys */
   if(keyString > 27){
     tagCode = whoKey();
     keyString =0;
   }
  
   
-  
+ /*start taking code when * is hit */
 if(keyString == asterisk){
     Serial.println("Enter code");
     //index=0;
@@ -76,14 +78,14 @@ if(keyString == asterisk){
     keyString = 0;
   
 }
-
-  if(keyString == 13){
+/*prints the pin to serial when # is pressed */
+  if(keyString == pound){
   showCode();
   }
 
 
 }
-
+/*check for key owner */
 long whoKey(){
   switch(keyString) {
     Serial.println(keyString);
@@ -108,36 +110,39 @@ long whoKey(){
    }
 }
 void open(){
-  digitalWrite(CH1, HIGH); //sets arduino pin #13 to HIGH to open lock
-  Serial.println("open");
-  delay(3000); //open for 3 seconds
-  digitalWrite(CH1, LOW);   //stops opening door circuit
+  digitalWrite(RELAY_CH, HIGH); /*sets arduino pin #13 to HIGH to open lock*/
+  Serial.println("Opening door");
+  delay(3000); /*open for 3 seconds*/
+  digitalWrite(RELAY_CH, LOW);   /*stops opening door circuit*/
 
 }
+/*attempts to get user pin from keypad, doesn't work right. Needs to be run via an interrupt*/
 void getKey(){
-  //int index = index;
+
   long local = 0;
   
-  //local = wg.getCode();
+  /*local = wg.getCode();*/
   for (int i = 0; i < 6; i++){
-    //delay(500);
+
     local = wgData();
     pinStr[i] = local;
-    //index++;
     Serial.print(index);
     Serial.println(local);
     keyString = 0;
-    //return index;
+
 }}
 
+/*prints user pin to serial*/
 void showCode(){
 for (int i = 0; i < 6; i++){
-   Serial.print(pinStr[i]," ");
+   Serial.print(pinStr[i]);
    delay(50);
    keyString=0;
    }
 Serial.println();
 }
+
+/*get data from keypad and show various forms on serial*/
 long wgData(){
 long keyData =0;
     Serial.print("Wiegand HEX = ");
@@ -150,19 +155,21 @@ long keyData =0;
 
   return keyData;
 }
+
+/*blinks keypad LED when user not recognized or unathorized, LED not connected yet*/
 void blinkThree(){
   Serial.println("User not recognized");
-  digitalWrite(CH2, HIGH);
+  digitalWrite(LED_CH, HIGH);
   delay(300);
-    digitalWrite(CH2, LOW);
+    digitalWrite(LED_CH, LOW);
   delay(200);
-    digitalWrite(CH2, HIGH);
+    digitalWrite(LED_CH, HIGH);
   delay(300);
-    digitalWrite(CH2, LOW);
+    digitalWrite(LED_CH, LOW);
   delay(200);
-    digitalWrite(CH2, HIGH);
+    digitalWrite(LED_CH, HIGH);
   delay(300);
-    digitalWrite(CH2, LOW);
+    digitalWrite(LED_CH, LOW);
   delay(200);
 
 }
