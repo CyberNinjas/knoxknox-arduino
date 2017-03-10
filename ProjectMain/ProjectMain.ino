@@ -1,38 +1,43 @@
 //#include <SoftwareSerial.h>
 #include <Wiegand.h>
-WIEGAND wg; //catches data from keypad
+WIEGAND wg; //initialize Wiegand system
 //SoftwareSerial Serial(14, 12, false, 256); //save for possible future use 
-/*
+/* Serial numbers for each key we have
 long keyA = 787592; //SN4546427
 long keyB = 2753672; //SN4546469
 long keyC = 3540104; //SN4882903 -> Andrew's key
 long blackList = 2496273;
 */
-long tagCode =0;
-long asterisk = 27;
-long keyString =0;
-#define CH1 13 //Ch1=D13, output to door lock relay
-#define CH2 10 //Ch2=D10, output to keypad LED
-int pinStr[6] = {1,2,3,6,5,4};
+
+#define RELAY_CH 13 //pin D13, output to door lock relay
+#define LED_CH 10 //pin D10, output to keypad LED
+
+//#define KEYPAD_D0 2 // pin D2, input from keypad D0 (work in progress)
+//#define KEYPAD_D1 3 // pin D3, input from keypad D1 (WIP)
+
+//Global variables, use long when pulling from keypad to get full yubi serial
+long tagCode =0; //Yubi serial number
+long asterisk = 27; //* key
+long pound = 13; //# key
+long keyString =0; //input kept here
+int pinStr[6] = {1,2,3,6,5,4}; //PIN keeper
 int index;
 
 
 void setup() {
-//get serial going
-  delay(10);
-  Serial.begin(9600);
+//get serial going, let serial know what's up
+  delay(100); //let system voltages settle
+  Serial.begin(9600); //serial baud
   Serial.println("Hello!");
   Serial.println("Arduino started");
-  delay(10);
-  wg.begin();
+  wg.begin(); //start keypad
   Serial.println("Keypad enabled");
-  delay(10);
 index = 0;
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-/*
+  // Main code runs reatedly
+/* //this is the standard method used to poll the keypad from the Wiegand example but the decimal value is stored in keyString
   if(wg.available())
   {
     Serial.print("Wiegand HEX = ");
@@ -43,6 +48,13 @@ void loop() {
     Serial.print(", Type W");
     Serial.println(wg.getWiegandType());    
   } 
+  */
+  //setup interrupts for keypad, a better way of taking data from keypad (work in progress)
+  /*
+  pinMode(PIN_D0, INPUT);
+  pinMode(PIN_D1, INPUT);
+  setInterrupt(digitalPinToInterrupt(PIN_D0), pinChange, CHANGE);
+  setInterrupt(digitalPinToInterrupt(PIN_D1), pinChange, CHANGE);
   */
   delay(500);
 if(wg.available())
@@ -90,14 +102,15 @@ long whoKey(){
     break;
     case 2496273:
     Serial.println("Blacklisted card");
+    blinkThree();
     return 0;
     break;
    }
 }
 void open(){
-  digitalWrite(CH1, HIGH); //sets arduino pin #13 to HIGH
+  digitalWrite(CH1, HIGH); //sets arduino pin #13 to HIGH to open lock
   Serial.println("open");
-  delay(1000);
+  delay(3000); //open for 3 seconds
   digitalWrite(CH1, LOW);   //stops opening door circuit
 
 }
